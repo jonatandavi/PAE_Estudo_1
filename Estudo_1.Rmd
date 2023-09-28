@@ -9,7 +9,7 @@ output:
     df_print: paged
 ---
 
-```{r setup,results='hide',warning=FALSE,echo=FALSE}
+```{r setup,results='hide',warning=FALSE,echo=FALSE,eval=FALSE}
 # A few initial definitions just to make sure all required packages are installed. Change as needed.
 # NOTE: It may echo some weird messages to the PDF on the first compile (package installation messages). Run twice and the problem will (hopefully) go away.
 if (!require(ggplot2, quietly = TRUE)){
@@ -26,23 +26,7 @@ if (!require(GGally, quietly = TRUE)){
       }
 ```
 
-## Resumo
-
-Este estudo de caso é uma comparação do IMC médio de alunos do PPGE ao longo de dois semestre. Foram coletados dados de 2016/2 e 2017/2. Os dados são compostos de:
-
--   altura
--   idade
--   sexo
--   peso
--   curso (PPGE ou ENGSIS) - aplica-se apenas para 2016/2
-
-A pergunta de interesse é a seguinte:
-
-> Existe alteração no estilo de vida entre os alunos do PPGE de um semestre para outro?
-
-A analise será feita por subgrupos, masculino e feminino.
-
-```{r, eval=F}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, results='hide'}
 install.packages("devtools")                    # you only have to install it once
 library(devtools)
 install_github("rstudio/rmarkdown")             # you only have to install it once
@@ -50,90 +34,168 @@ library(rmarkdown)
 render("Estudo_1.Rmd","pdf_document")    # this renders the pdf
 ```
 
+## Resumo
+
+Este estudo de caso é uma comparação de coletados dados de alunos da UFMG nos semestres de 2016/2 e 2017/2. Os dados são compostos de:
+
+-   altura
+-   idade
+-   sexo
+-   peso
+-   curso (PPGEE ou ENGSIS) - aplica-se apenas para 2016/2
+
+A pergunta de interesse é a seguinte:
+
+> Existe alteração no estilo de vida entre os alunos do PPGEE de um semestre para outro?
+
+Para isso, um dos estimadores pontuais que podem ser utilizados para responder a essa pergunta é o IMC (Índice de Massa Corporal), cuja relação matemática é dada por:
+
+$$ IMC=\frac{peso}{altura ^ 2} $$
+
+Tendo em vista que há a possibilidade de haver diferenças nos valores médios do IMC para homens e mulheres, a analise será feita por subgrupos, masculino e feminino.
+
+
+
 ## Design experimental
 
-A pergunta de interesse nos leva a definir os seguintes teste de hipoteses:
+A pergunta de interesse nos leva a definir os seguintes testes de hipoteses:
 
 $$\begin{cases} H_0: \mu_{2016} = \mu_{2017}&\\H_1: \mu_{2016} \neq \mu_{2017}\end{cases}$$
 
-Onde o parametro $\mu$ sigfica o IMC médio de cada um dos anos. A hipotese $H_0$ significa que não houve altereção no estilo de vida entre os alunos e a hipotese $H_0$ significa que houve alteração, ou seja, as médias de IMC são diferentes entre os alunos.
+Onde o parametro $\mu$ sigfica o IMC médio de cada turma. A hipotese $H_0$ significa que não houve altereção no estilo de vida entre os alunos e a hipotese $H_0$ significa que houve alteração, ou seja, as médias de IMC são diferentes entre os alunos.
 
-Se tratando de IMC, existe as seguintes classificações:
 
--   **IMC** $<$ 18,5kg/m2 - baixo peso
+Para o IMC, existe as seguintes classificações:
 
--   **IMC** $>$ 18,5 até 24,9kg/m2 - eutrofia (peso adequado)
+-   **IMC** $<$ 18,5kg/m$m^2$ - baixo peso
 
--   **IMC** $\geq$ 25 até 29,9kg/m2 - sobrepeso
+-   **IMC** $>$ 18,5 até 24,9kg/m$m^2$ - eutrofia (peso adequado)
 
--   **IMC** $>$ 30,0kg/m2 até 34,9kg/m2 - obesidade grau 1
+-   **IMC** $\geq$ 25 até 29,9kg/m$m^2$ - sobrepeso
 
--   **IMC** $>$ 35kg/m2 até 39,9kg/m2 - obesidade grau 2
+-   **IMC** $>$ 30,0kg/m2 até 34,9kg/m$m^2$ - obesidade grau 1
+
+-   **IMC** $>$ 35kg/m2 até 39,9kg/m$m^2$ - obesidade grau 2
 
 -   **IMC** $>$ 40kg/m2 - obesidade extrema
 
-Nota-se que a alteração é sempre de 5 em 5 kg/m2. Logo um valor interessante para o efeito minimo relevante ($\delta^*$) é uma alteração de 5 entre as médias ou uma alteração na classificação da média do IMC da turma.
+
+Nota-se que a alteração é sempre de 5 em 5 kg/$m^2$. Logo um valor interessante para o efeito minimo relevante ($\delta^*$) é uma alteração de 5 entre as médias ou uma alteração na classificação da média do IMC da turma.
+
 
 Para o teste estatistico será divido em duas análises, uma para o sexo masculino e uma para o sexo feminino. Então serão dois teste de hipoteses distintos, um para cada sexo.
 
+
 Como a variância da população não é conhecida, utilizaremos o teste t com um $\alpha$ = 0,5.
+
 
 ### Description of the data collection
 
-Whenever needed, you can also include an (optional) subsection describing the actual data collection, how it was performed, any adaptations or unexpected events that may have occurred, etc. Subsections like this can also be used for the sample size calculations or any other aspect that requires a longer discussion.
+TBA
 
 ## Análise exploratória dos dados
 
 Carregando os dados:
+
 
 ```{r loaddata}
 data2016 = read.csv('https://raw.githubusercontent.com/fcampelo/Design-and-Analysis-of-Experiments/master/data%20files/imc_20162.csv')
 data2017 = read.csv('https://raw.githubusercontent.com/fcampelo/Design-and-Analysis-of-Experiments/master/data%20files/CS01_20172.csv', sep=";")
 ```
 
+
 Já foi mencionado no *Resumo* que existem dados de alunos de graduação (ENGSIS) nos dados de 2016. O primeiro passo é expurgar estes dados para não contaminarem nossa amostra.
+
+
 
 ```{r filterdata}
 ppgeeStudents1 = subset(data2016, Course=='PPGEE')
 ```
 
-O parametro de interesse é o IMC, ele não esta de forma explicita nos dados. Então será cáculado pela seguinte formula
 
-$$IMC = \frac{weight}{height^{2}}$$
+Além disso, é de grande importância que os dados dos alunos sejam separados por ano e por sexo. Dessa forma, a separação em masculino e feminino se deu por:
+
+
+```{r filterdata2}
+female2016 = subset(ppgeeStudents1, Gender=='F')
+male2016 = subset(ppgeeStudents1, Gender=='M')
+female2017 = subset(data2017, Sex=='F')
+male2017 = subset(data2017, Sex=='M')
+```
+
+
+O parametro de interesse é o IMC, cujo valor não está explícito nos dados. Porém, tendo em vista sua conhecida fórmula, foram combinados os valores da massa corporal e da altura dos alunos para calcular o IMC e este foi inserido na tabela de dados original.
+
 
 ```{r imccalc}
-data2016$imc <- (data2016$Weight.kg / (data2016$Height.m * data2016$Height.m))
-data2017$imc <- (data2017$Weight.kg / (data2017$height.m * data2017$height.m))
+female2016$imc <- (female2016$Weight.kg / (female2016$Height.m*female2016$Height.m))
+male2016$imc <- (male2016$Weight.kg / (male2016$Height.m*male2016$Height.m))
+female2017$imc <- (female2017$Weight.kg / (female2017$height.m*female2017$height.m))
+male2017$imc <- (male2017$Weight.kg / (male2017$height.m*male2017$height.m))
 ```
 
-To get an initial feel for the relationships between the relevant variables of your experiment it is frequently interesting to perform some preliminary (exploratory) analysis. This is frequently referred to as *getting a feel* of your data, and can suggest procedures (such as outlier investigation or data transformations) to experienced experimenters.
 
-```{r pairs,fig.width=8,echo=TRUE,message=FALSE,fig.cap="Exploring the effect of car transmission on mpg values"}
-library(GGally,quietly = T, warn.conflicts = F) # This is just me getting fancy.
-                                                # There are much simpler ways ;-)
-ggpairs(data=mtcars,columns=c(1,9),title="MPG by transmission type",
-        upper=list(combo="box"),lower=list(combo="facethist"),
-        diag=list(continuous="densityDiag",discrete="barDiag"))
+De posse dos valores do IMC para cada ano e para cada gênero, pode-se obter alguns estimadores pontuais e isso foi feito da seguinte forma:
+
+
+Cálculo do IMC médio
+
+```{r imccavg}
+meanFemIMC2016 = mean(female2016$imc)
+meanMaleIMC2016 = mean(male2016$imc)
+meanFemIMC2017 = mean(female2017$imc)
+meanMaleIMC2017 = mean(male2017$imc)
 ```
 
-Your preliminary analysis should be described together with the plots. In this example, two facts are immediately clear from the plots: first, **mpg** tends to correlate well with many of the other variables, most intensely with **drat** (positively) and **wt** (negatively). It is also clear that many of the variables are highly correlated (e.g., **wt** and **disp**). Second, it seems like manual transmission models present larger values of **mpg** than the automatic ones. In the next section a linear model will be fit to the data in order to investigate the significance and magnitude of this possible effect.
 
-## Statistical Analysis
+Cálculo do desvio padrão
 
-Your statistical analysis should come here. This is the place where you should fit your statistical model, get the results of your significance test, your effect size estimates and confidence intervals.
-
-```{r fitmodel,results='hold'}
-model<-aov(mpg~am*disp,data=mtcars)
-summary(model)
+```{r imcsd}
+sdFemIMC2016 = sd(female2016$imc)
+sdMaleIMC2016 = sd(male2016$imc)
+sdFemIMC2017 = sd(female2017$imc)
+sdMaleIMC2017 = sd(male2017$imc)
 ```
+
+
+## Análise Estatística
+
+
+Os dados obtidos para os alunos variam em tamanho da amostra, sendo N < 30 e cuja variância é desconhecida. Dessa forma, o teste t é o indicado para a análise estatística. Para a avaliação dos dados, definimos os seguintes parâmetros:
+
+
+-   **$\alpha$** $=$ 0,5
+-   **$\delta^*$** $=$ 5 kg/$m^2$
+
+Além disso, tendo em vista que queremos avaliar se houve mudanças no IMC médio da turma, realizamos o teste bilateral, com intervalo de confiança 1 - $\alpha$ $=$ 0.95. Dessa forma, obtivemos os seguintes resultados:
+
+Comparando homens entre 2016 e 2017
+```{r ttest1,results='hold'}
+t.test(male2017$imc, alternative="two.sided", mu=meanMaleIMC2016, conf.level = 0.95)
+```
+
+Como se pode perceber, o valor médio do IMC dos homens de 2017 está dentro de um intervalo de confiança ($22.72180 < $\mu$=24.93595 < 25.84921$) esperado, quando se comparado à média dos homens de 2016. Isso também fica explícito pelo valor de p (0.3959), que é significativamente maior que o índice de significância.
+
+Comparando mulheres entre 2016 e 2017
+```{r ttest2,results='hold'}
+t.test(female2017$imc, alternative="two.sided", mu=meanFemIMC2016, conf.level = 0.95)
+```
+
+Diferentemente do caso dos homens, o valor médio do IMC das mulheres de 2017 está fora do um intervalo de confiança $[15.89376, 20.99943] < \mu=21.08443$ esperado, quando se comparado à média das mulheres de 2016. Isso também fica explícito pelo valor de p (0.04613), que é menor que o índice de significância escolhido. Deve-se, no entanto, levar em consideração que entre esses dois grupos há uma diferença no tamanho da amostra, sendo que em 2016 tinhamos 7 mulheres e em 2017 tinhamos 4, uma amostra que possui tamanho pequeno, causando impactos na análise.
+
+
+Além da análise do IMC, tendo em vista que as mudanças no estilo de vida tem uma probabilidade maior de afetar o peso corporal das pessoas do que em suas alturas, avaliamos, também, o peso dos alunos. Dessa forma, temos:
+
+(INSERINDO)
+
 
 ### Checking Model Assumptions
 
 The assumptions of your test should also be validated, and possible effects of violations should also be explored.
 
 ```{r resplots,fig.width=8,echo=TRUE,message=FALSE, fig.cap = "Residual plots for the anova model"}
-par(mfrow=c(2,2), mai=.3*c(1,1,1,1))
-plot(model,pch=16,lty=1,lwd=2)
+#par(mfrow=c(2,2), mai=.3*c(1,1,1,1))
+#plot(model,pch=16,lty=1,lwd=2)
 ```
 
 ### Conclusions and Recommendations
