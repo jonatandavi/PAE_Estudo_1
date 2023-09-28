@@ -1,0 +1,141 @@
+---
+title: "Estudo 1"
+author: "Jonatan Almeida and Helbert Paulino"
+date: "2023-09-27"
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+---
+
+```{r setup,results='hide',warning=FALSE,echo=FALSE}
+# A few initial definitions just to make sure all required packages are installed. Change as needed.
+# NOTE: It may echo some weird messages to the PDF on the first compile (package installation messages). Run twice and the problem will (hopefully) go away.
+if (!require(ggplot2, quietly = TRUE)){
+      install.packages("ggplot2")
+      }
+if (!require(devtools, quietly = TRUE)){
+      install.packages("devtools")
+      }
+ if (!require(broom, quietly = TRUE)){
+       devtools::install_github("dgrtwo/broom")
+      }
+if (!require(GGally, quietly = TRUE)){
+      install.packages("GGally")
+      }
+```
+
+## Resumo
+
+Este estudo de caso é uma comparação do IMC médio de alunos do PPGE ao longo de dois semestre. Foram coletados dados de 2016/2 e 2017/2. Os dados são compostos de:
+
+-   altura
+-   idade
+-   sexo
+-   peso
+-   curso (PPGE ou ENGSIS) - aplica-se apenas para 2016/2
+
+A pergunta de interesse é a seguinte:
+
+> Existe alteração no estilo de vida entre os alunos do PPGE de um semestre para outro?
+
+A analise será feita por subgrupos, masculino e feminino.
+
+```{r, eval=F}
+install.packages("devtools")                    # you only have to install it once
+library(devtools)
+install_github("rstudio/rmarkdown")             # you only have to install it once
+library(rmarkdown)
+render("Estudo_1.Rmd","pdf_document")    # this renders the pdf
+```
+
+## Design experimental
+
+A pergunta de interesse nos leva a definir os seguintes teste de hipoteses:
+
+$$\begin{cases} H_0: \mu_{2016} = \mu_{2017}&\\H_1: \mu_{2016} \neq \mu_{2017}\end{cases}$$
+
+Onde o parametro $\mu$ sigfica o IMC médio de cada um dos anos. A hipotese $H_0$ significa que não houve altereção no estilo de vida entre os alunos e a hipotese $H_0$ significa que houve alteração, ou seja, as médias de IMC são diferentes entre os alunos.
+
+Se tratando de IMC, existe as seguintes classificações:
+
+-   **IMC** $<$ 18,5kg/m2 - baixo peso
+
+-   **IMC** $>$ 18,5 até 24,9kg/m2 - eutrofia (peso adequado)
+
+-   **IMC** $\geq$ 25 até 29,9kg/m2 - sobrepeso
+
+-   **IMC** $>$ 30,0kg/m2 até 34,9kg/m2 - obesidade grau 1
+
+-   **IMC** $>$ 35kg/m2 até 39,9kg/m2 - obesidade grau 2
+
+-   **IMC** $>$ 40kg/m2 - obesidade extrema
+
+Nota-se que a alteração é sempre de 5 em 5 kg/m2. Logo um valor interessante para o efeito minimo relevante ($\delta^*$) é uma alteração de 5 entre as médias ou uma alteração na classificação da média do IMC da turma.
+
+Para o teste estatistico será divido em duas análises, uma para o sexo masculino e uma para o sexo feminino. Então serão dois teste de hipoteses distintos, um para cada sexo.
+
+Como a variância da população não é conhecida, utilizaremos o teste t com um $\alpha$ = 0,5.
+
+### Description of the data collection
+
+Whenever needed, you can also include an (optional) subsection describing the actual data collection, how it was performed, any adaptations or unexpected events that may have occurred, etc. Subsections like this can also be used for the sample size calculations or any other aspect that requires a longer discussion.
+
+## Análise exploratória dos dados
+
+Carregando os dados:
+
+```{r loaddata}
+data2016 = read.csv('https://raw.githubusercontent.com/fcampelo/Design-and-Analysis-of-Experiments/master/data%20files/imc_20162.csv')
+data2017 = read.csv('https://raw.githubusercontent.com/fcampelo/Design-and-Analysis-of-Experiments/master/data%20files/CS01_20172.csv', sep=";")
+```
+
+Já foi mencionado no *Resumo* que existem dados de alunos de graduação (ENGSIS) nos dados de 2016. O primeiro passo é expurgar estes dados para não contaminarem nossa amostra.
+
+```{r filterdata}
+ppgeeStudents1 = subset(data2016, Course=='PPGEE')
+```
+
+O parametro de interesse é o IMC, ele não esta de forma explicita nos dados. Então será cáculado pela seguinte formula
+
+$$IMC = \frac{weight}{height^{2}}$$
+
+```{r imccalc}
+data2016$imc <- (data2016$Weight.kg / (data2016$Height.m * data2016$Height.m))
+data2017$imc <- (data2017$Weight.kg / (data2017$height.m * data2017$height.m))
+```
+
+To get an initial feel for the relationships between the relevant variables of your experiment it is frequently interesting to perform some preliminary (exploratory) analysis. This is frequently referred to as *getting a feel* of your data, and can suggest procedures (such as outlier investigation or data transformations) to experienced experimenters.
+
+```{r pairs,fig.width=8,echo=TRUE,message=FALSE,fig.cap="Exploring the effect of car transmission on mpg values"}
+library(GGally,quietly = T, warn.conflicts = F) # This is just me getting fancy.
+                                                # There are much simpler ways ;-)
+ggpairs(data=mtcars,columns=c(1,9),title="MPG by transmission type",
+        upper=list(combo="box"),lower=list(combo="facethist"),
+        diag=list(continuous="densityDiag",discrete="barDiag"))
+```
+
+Your preliminary analysis should be described together with the plots. In this example, two facts are immediately clear from the plots: first, **mpg** tends to correlate well with many of the other variables, most intensely with **drat** (positively) and **wt** (negatively). It is also clear that many of the variables are highly correlated (e.g., **wt** and **disp**). Second, it seems like manual transmission models present larger values of **mpg** than the automatic ones. In the next section a linear model will be fit to the data in order to investigate the significance and magnitude of this possible effect.
+
+## Statistical Analysis
+
+Your statistical analysis should come here. This is the place where you should fit your statistical model, get the results of your significance test, your effect size estimates and confidence intervals.
+
+```{r fitmodel,results='hold'}
+model<-aov(mpg~am*disp,data=mtcars)
+summary(model)
+```
+
+### Checking Model Assumptions
+
+The assumptions of your test should also be validated, and possible effects of violations should also be explored.
+
+```{r resplots,fig.width=8,echo=TRUE,message=FALSE, fig.cap = "Residual plots for the anova model"}
+par(mfrow=c(2,2), mai=.3*c(1,1,1,1))
+plot(model,pch=16,lty=1,lwd=2)
+```
+
+### Conclusions and Recommendations
+
+The discussion of your results, and the scientific/technical meaning of the effects detected, should be placed here. Always be sure to tie your results back to the original question of interest!
