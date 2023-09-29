@@ -249,8 +249,30 @@ Homens 2017: 1.733333 m
 Desses dados, conforme o esperado, o valor médio do peso dos estudantes variou mais do que o valor da altura. Nesse caso, para as mulheres, obtivemos uma variação de -8.82 kg, enquanto para os homens esse valor foi de -3.9 kg. Considerando-se ainda que o peso dos homens é maior que o das mulheres, essa variação percentual é ainda mais acentuada para o sexo feminino, o que corrobora com o fato de que o IMC médio manteve-se dentro do intervalo de confiança para os homens, ao passo de que para as mulheres a variação estava fora do intervalo de confiança.
 
 ### Determinação do poder de teste
-(INSERINDO)
 
+Uma das formas de verificar se o teste realizado apresenta potencial para rejeitar ou não rejeitar a hipótese nula é a estimação do poder to teste. Isso é feito em R através da função power.t.test. Além disso, podemos, a partir da estimação de uma propabilidade 1-$\beta$ (Erro do tipo II - Falso Negativo), podemos ter uma estimativa para o tamanho amostral que deveriamos ter. Para as amostras, temos os seguintes testes:
+
+Para os alunos de 2016
+```{r echo=FALSE}
+power.t.test(21,delta=5,sd=sdMaleIMC2016, sig.level=0.05, type="two.sample", alternative="two.sided")
+```
+
+Para os alunos de 2017
+```{r echo=FALSE}
+power.t.test(21,delta=5,sd=sdMaleIMC2017, sig.level=0.05, type="two.sample", alternative="two.sided")
+```
+
+Para as alunas de 2016
+```{r echo=FALSE}
+power.t.test(7,delta=5,sd=sdFemIMC2016, sig.level=0.05, type="two.sample", alternative="two.sided")
+```
+
+Para as alunas de 2017
+```{r echo=FALSE}
+power.t.test(4,delta=5,sd=sdFemIMC2017, sig.level=0.05, type="two.sample", alternative="two.sided")
+```
+
+Pode-se ver pelos testes acima, que a probabilidade de se cometer um erro do tipo II (falso negativo) é, em geral, inferior a 6%. Dessa forma, há uma chance alta de que os resultados do experimento permitam inferir algo sobre as hipóteses levantadas, com bom grau de confiabilidade.
 
 ### Conclusões
 
